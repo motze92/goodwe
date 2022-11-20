@@ -1,13 +1,16 @@
 export * from './lib/async';
 export * from './lib/number';
-import Scanner from './lib/scanner';
-import {FieldType, InfluxDB} from "influx";
+
 import * as dotenv from 'dotenv';
+import { FieldType, InfluxDB } from "influx";
+
+import Scanner from './lib/scanner';
+
 
 dotenv.config()
 
-let scanner = new Scanner(new InfluxDB({
-  host: process.env.INFLUX_IP,
+const scanner = new Scanner(new InfluxDB({
+  host: 'influxdb',
   database: 'photovoltaik',
   schema: [
     {
@@ -35,7 +38,7 @@ let scanner = new Scanner(new InfluxDB({
       ]
     }
   ]
-}), process.env.BIND_IP)
+}), '0.0.0.0')
 
 scanner.getData()
 

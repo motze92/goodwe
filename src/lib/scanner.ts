@@ -17,7 +17,7 @@ export default class Scanner {
   influx = null;
   bind_ip = '0.0.0.0'
 
-  inverter_ip:string|null = null;
+  inverter_ip: string | null = null;
 
   async findInvertes() {
     const server = dgram.createSocket('udp4');
@@ -28,15 +28,15 @@ export default class Scanner {
     });
 
     return new Promise((resolve, reject) => {
-      server.on('error',(error) => {
+      server.on('error', (error) => {
         console.log('Error1: ' + error);
         server.close();
         reject()
       });
 
-      server.on('message',(msg) => {
+      server.on('message', (msg) => {
         const res = msg.toString().split(',')
-        if(res.length === 3) {
+        if (res.length === 3) {
           this.inverter_ip = res[0]
           server.close();
           resolve({
@@ -47,7 +47,8 @@ export default class Scanner {
         }
       });
 
-      server.on('listening',() =>{
+      server.on('listening', () => {
+        console.log('Listening for inverter')
         server.send(data, PORT, '255.255.255.255')
       });
     })
@@ -59,7 +60,7 @@ export default class Scanner {
       try {
         await this.findInvertes()
       } catch (error) {
-        console.log('Inverter search: ' +  error)
+        console.log('Inverter search: ' + error)
         await this.sleep(5000)
         this.getData()
       }
@@ -71,11 +72,11 @@ export default class Scanner {
     server.on('error', (error) => {
       console.log('Error2: ' + error);
       server.close();
-      this.findInvertes()
+      // this.findInvertes()
     });
 
     // emits on new datagram msg
-    server.on('message', (msg) =>{
+    server.on('message', (msg) => {
       if (msg.length === 149) {
         this.influx.writePoints([
           {
@@ -90,8 +91,8 @@ export default class Scanner {
               pv1_power: this.readVoltage(msg, 7) * this.readCurrent(msg, 9),
               pv2_voltage: this.readVoltage(msg, 12),
               pv2_current: this.readCurrent(msg, 14),
-              pv2_power: this.readVoltage(msg, 12) * this.readCurrent(msg, 24),
-              pv_total_power: this.readVoltage(msg, 7) * this.readCurrent(msg, 9) + this.readVoltage(msg, 12) * this.readCurrent(msg, 24),
+              pv2_power: this.readVoltage(msg, 12) * this.readCurrent(msg, 14),
+              pv_total_power: this.readVoltage(msg, 7) * this.readCurrent(msg, 9) + this.readVoltage(msg, 12) * this.readCurrent(msg, 14),
               grid_voltage: this.readVoltage(msg, 41),
               grid_current: this.readCurrent(msg, 43),
               grid_power: this.readPower(msg, 45),
@@ -119,7 +120,7 @@ export default class Scanner {
   }
 
   readPower(data, offset) {
-    let val = data.slice( offset, offset + 4).readInt16BE()
+    let val = data.slice(offset, offset + 4).readInt16BE()
     if (val > 32768) {
       val = val - 65535
     }
@@ -127,7 +128,7 @@ export default class Scanner {
   }
 
   readPower2(data, offset) {
-    let val = data.slice( offset, offset + 2).readInt16BE()
+    let val = data.slice(offset, offset + 2).readInt16BE()
     if (val > 32768) {
       val = val - 65535
     }
@@ -135,32 +136,32 @@ export default class Scanner {
   }
 
   readPowerK(data, offset) {
-    const val = data.slice( offset, offset + 4).readInt16BE()
+    const val = data.slice(offset, offset + 4).readInt16BE()
     return val / 10;
   }
 
   readPowerK2(data, offset) {
-    const val = data.slice( offset, offset + 2).readInt16BE()
+    const val = data.slice(offset, offset + 2).readInt16BE()
     return val / 10;
   }
 
   readFreq(data, offset) {
-    const val = data.slice( offset, offset + 2).readInt16BE()
+    const val = data.slice(offset, offset + 2).readInt16BE()
     return val / 100;
   }
 
   readTemperature(data, offset) {
-    const val = data.slice( offset, offset + 2).readInt16BE()
+    const val = data.slice(offset, offset + 2).readInt16BE()
     return val / 10;
   }
 
   readVoltage(data, offset) {
-    const val = data.slice( offset, offset + 2).readInt16BE()
+    const val = data.slice(offset, offset + 2).readInt16BE()
     return val / 10;
   }
 
   readCurrent(data, offset) {
-    let val = data.slice( offset, offset + 2).readInt16BE()
+    let val = data.slice(offset, offset + 2).readInt16BE()
     if (val > 32768) {
       val = val - 65535
     }
@@ -168,7 +169,7 @@ export default class Scanner {
   }
 
   readPercentage(data, offset) {
-    const val = data.slice( offset, offset + 1).readInt8()
+    const val = data.slice(offset, offset + 1).readInt8()
     return val;
   }
 

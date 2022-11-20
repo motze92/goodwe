@@ -1,0 +1,61 @@
+version: '2'
+services:
+  influxdb:
+    image: influxdb:1.8
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=smarthome
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+    privileged: true
+    restart: unless-stopped
+    networks:
+      - goodwe
+    ports:
+      - 8068:8086
+  chronograf:
+    image: chronograf:latest
+    volumes:
+      - chronograf-storage:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_USERNAME=${INFLUXDB_USERNAME}
+      - INFLUXDB_PASSWORD=${INFLUXDB_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - goodwe
+    ports:
+      - 8888:8888
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - goodwe
+  web:
+    build: .
+    command: yarn watch:run
+    privileged: true
+    volumes:
+      - .:/usr/app/
+    restart: unless-stopped
+    networks:
+      - goodwe
+volumes:
+  influxdb-storage:
+  chronograf-storage:
+  grafana-storage:
+networks:
+  goodwe:
